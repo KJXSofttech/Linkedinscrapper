@@ -1,0 +1,7 @@
+/* Style for selection box */
+.selection-box {
+    position: absolute;
+    border: 2px dashed #0099ff;
+    background-color: rgba(0, 153, 255, 0.2);
+  }
+  
