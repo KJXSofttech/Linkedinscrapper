@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import re
 import time
+import json
 
 def login(driver, email, password):
     driver.get("https://www.linkedin.com/login")
@@ -36,6 +37,12 @@ def extract_third_profile_image(html_content):
     else:
         return None
 
+def extract_background_image(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    background_image_tag = soup.find('img', {'class': 'profile-background-image__image'})
+    background_image_url = background_image_tag['src'] if background_image_tag else None
+    return background_image_url if background_image_url else "Background image not found"
+
 def scrape_profile(driver, profile_url):
     print(f"Scraping profile: {profile_url}")
     driver.get(profile_url)
@@ -62,6 +69,9 @@ def scrape_profile(driver, profile_url):
     # Extract profile picture URL
     profile_picture_url = extract_third_profile_image(html_content)
     profile_picture_url = profile_picture_url if profile_picture_url else "Profile picture not found"
+
+    # Extract background image URL
+    background_image_url = extract_background_image(html_content)
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -148,30 +158,18 @@ def scrape_profile(driver, profile_url):
             
             educations.append(education)
 
-    # Print the extracted details
-    print("Extracted Profile Details:")
-    print(f"Full name: {full_name}")
-    print(f"Headline: {headline}")
-    print(f"Location: {location}")
-    print(f"Profile Picture URL: {profile_picture_url}")
-    print("\nAbout Section:")
-    print(about_text)
-    print("\nExperience:")
-    for exp in experiences:
-        print(f"{exp['position']} at {exp['company']}")
-        if exp['duration']:
-            print(f"   Duration: {exp['duration']}")
-        if exp['location']:
-            print(f"   Location: {exp['location']}")
-        print()
+    profile_data = {
+        "Full name": full_name,
+        "Headline": headline,
+        "Location": location,
+        "Profile Picture URL": profile_picture_url,
+        "Background Image URL": background_image_url,
+        "About Section": about_text,
+        "Experience": experiences,
+        "Education": educations
+    }
 
-    print("\nEducation:")
-    for edu in educations:
-        print(f"University: {edu['university']}")
-        print(f"Degree: {edu['degree']}")
-        print(f"Field of Study: {edu['field_of_study']}")
-        print(f"Duration: {edu['years']}")
-        print()
+    print(json.dumps(profile_data, indent=4))
 
 def main(email, password, profile_links):
     driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
@@ -188,6 +186,9 @@ if __name__ == "__main__":
     email = input("Enter your LinkedIn email: ")
     password = input("Enter your LinkedIn password: ")
     profile_links = [
-        "https://www.linkedin.com/in/debjani-roy-440b211b0/"
+        "https://www.linkedin.com/in/manjodh-singh-a5082b216/",
+        "https://www.linkedin.com/in/sian-vance-05bb8817a/",
+        "https://www.linkedin.com/in/gokuls12/",
+        
     ]
     main(email, password, profile_links)
