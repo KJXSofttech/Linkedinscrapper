@@ -16,21 +16,34 @@ def login(driver, email, password):
     password_elem.submit()
 
 def extract_user_id(profile_url):
-    # Extract user ID from the profile URL
     user_id = profile_url.split('/')[-2]
     return user_id
 
 def clean_text(text):
     return re.sub(r'<!---->', '', text)
 
+def extract_third_profile_image(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    img_tags = soup.find_all('img')
+
+    profile_images = []
+    for img_tag in img_tags:
+        if 'src' in img_tag.attrs and 'profile-displayphoto-shrink' in img_tag['src']:
+            profile_images.append(img_tag['src'])
+
+    if len(profile_images) >= 3:
+        return profile_images[2]
+    else:
+        return None
+
 def scrape_profile(driver, profile_url):
     print(f"Scraping profile: {profile_url}")
     driver.get(profile_url)
-    time.sleep(5)  # Ensure the page loads completely
+    time.sleep(5)
     
     html_content = driver.page_source
     user_id = extract_user_id(profile_url)
-    
+
     # Extract full name using regex
     full_name_match = re.search(r'(?<=<title>).+? \| LinkedIn', html_content)
     full_name = full_name_match.group().replace(" | LinkedIn", "") if full_name_match else "Full name not found"
@@ -45,6 +58,10 @@ def scrape_profile(driver, profile_url):
     location_match = re.search(r'<span class="text-body-small inline t-black--light break-words"[^>]*>([^<]+)</span>', html_content)
     location = location_match.group(1).strip() if location_match else "Location not found"
     location = clean_text(location)
+
+    # Extract profile picture URL
+    profile_picture_url = extract_third_profile_image(html_content)
+    profile_picture_url = profile_picture_url if profile_picture_url else "Profile picture not found"
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -62,9 +79,9 @@ def scrape_profile(driver, profile_url):
             # Extract the text content from each child element separately
             about_text = ""
             for child in about_section.children:
-                if child.name is not None:  # Exclude NavigableString objects
+                if child.name is not None:
                     text = child.get_text(strip=True)
-                    if text and text not in about_text:  # Avoid duplicates
+                    if text and text not in about_text:
                         about_text += text + "\n"
             about_text = about_text.strip()
             about_text = clean_text(about_text)
@@ -89,7 +106,7 @@ def scrape_profile(driver, profile_url):
             
             position_matches = re.findall(r'<span aria-hidden="true">(.*?)</span>', item)
             if position_matches:
-                experience['company'] = position_matches[1].strip()  # The second match should be the position
+                experience['company'] = position_matches[1].strip()
             
             duration_match = re.search(r'<span class="pvs-entity__caption-wrapper" aria-hidden="true">(.*?)</span>', item)
             if duration_match:
@@ -97,9 +114,8 @@ def scrape_profile(driver, profile_url):
             
             location_matches = re.findall(r'<span aria-hidden="true">(.*?)</span>', item)
             if len(location_matches) > 2:
-                experience['location'] = location_matches[-1].strip()  # The last match should be the location
+                experience['location'] = location_matches[-1].strip()
 
-            # Clean the text
             experience = {key: clean_text(value) for key, value in experience.items()}
             experiences.append(experience)
 
@@ -137,6 +153,7 @@ def scrape_profile(driver, profile_url):
     print(f"Full name: {full_name}")
     print(f"Headline: {headline}")
     print(f"Location: {location}")
+    print(f"Profile Picture URL: {profile_picture_url}")
     print("\nAbout Section:")
     print(about_text)
     print("\nExperience:")
@@ -171,6 +188,6 @@ if __name__ == "__main__":
     email = input("Enter your LinkedIn email: ")
     password = input("Enter your LinkedIn password: ")
     profile_links = [
-        "https://www.linkedin.com/in/sian-vance-05bb8817a/", "https://www.linkedin.com/in/sanket-ramteke131313/", "https://www.linkedin.com/in/yashmarathe21n/"
+        "https://www.linkedin.com/in/debjani-roy-440b211b0/"
     ]
     main(email, password, profile_links)
