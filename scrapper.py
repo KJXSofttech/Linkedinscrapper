@@ -43,6 +43,15 @@ def extract_background_image(html_content):
     background_image_url = background_image_tag['src'] if background_image_tag else None
     return background_image_url if background_image_url else "Background image not found"
 
+def extract_skills(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    skill_elements = soup.find_all('a', {'data-field': 'skill_card_skill_topic'})
+    skills = []
+    for skill in skill_elements:
+        skill_text = skill.find('span', {'aria-hidden': 'true'}).text.strip()
+        skills.append(clean_text(skill_text))
+    return skills
+
 def scrape_profile(driver, profile_url):
     print(f"Scraping profile: {profile_url}")
     driver.get(profile_url)
@@ -158,6 +167,9 @@ def scrape_profile(driver, profile_url):
             
             educations.append(education)
 
+    # Extract skills
+    skills = extract_skills(html_content)
+
     profile_data = {
         "Full name": full_name,
         "Headline": headline,
@@ -166,7 +178,8 @@ def scrape_profile(driver, profile_url):
         "Background Image URL": background_image_url,
         "About Section": about_text,
         "Experience": experiences,
-        "Education": educations
+        "Education": educations,
+        "Skills": skills
     }
 
     print(json.dumps(profile_data, indent=4))
@@ -189,6 +202,5 @@ if __name__ == "__main__":
         "https://www.linkedin.com/in/manjodh-singh-a5082b216/",
         "https://www.linkedin.com/in/sian-vance-05bb8817a/",
         "https://www.linkedin.com/in/gokuls12/",
-        
     ]
     main(email, password, profile_links)
