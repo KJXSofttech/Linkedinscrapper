@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: linkedin-scraper
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: ""
+    startCommand: "./start.sh"
+    envVars:
+      - key: FLASK_ENV
+        value: development
