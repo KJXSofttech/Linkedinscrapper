@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import re
 import time
 import random
-import json
+import os
 
 app = Flask(__name__)
 
@@ -197,6 +197,7 @@ def scrape():
     # Suppress Selenium logging
     options = webdriver.ChromeOptions()
     options.add_argument("--log-level=3")  # INFO = 0, WARNING = 1, LOG_ERROR = 2, LOG_FATAL = 3
+    options.add_argument("--headless")  # Run in headless mode
     driver = webdriver.Chrome(service=service, options=options)
 
     # Randomly select a credential set
@@ -214,4 +215,5 @@ def scrape():
     return response
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 4000))
+    app.run(host='0.0.0.0', port=port)
