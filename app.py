@@ -7,8 +7,10 @@ import re
 import time
 import random
 import os
+import logging
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 credentials = [
     {"email": "iakashreddy2k@gmail.com", "password": "Rz@Fas0923"},
@@ -16,6 +18,7 @@ credentials = [
 ]
 
 def login(driver, email, password):
+    logging.debug(f"Logging in with email: {email}")
     driver.get("https://www.linkedin.com/login")
     email_elem = driver.find_element(By.ID, "username")
     email_elem.send_keys(email)
@@ -53,7 +56,7 @@ def extract_skills(html_content):
     return skills
 
 def scrape_profile(driver, profile_url):
-    print(f"Scraping profile: {profile_url}")
+    logging.debug(f"Scraping profile: {profile_url}")
     driver.get(profile_url)
     time.sleep(5)
     
@@ -186,9 +189,12 @@ def scrape_profile(driver, profile_url):
 @app.route('/scrape', methods=['POST'])
 def scrape():
     data = request.json
+    logging.debug(f"Received data: {data}")
     profile_url = data.get('profile_url')
+    logging.debug(f"Profile URL: {profile_url}")
 
     if not profile_url:
+        logging.error("Profile URL is required")
         return jsonify({"error": "Profile URL is required"}), 400
 
     driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
@@ -202,12 +208,14 @@ def scrape():
 
     # Randomly select a credential set
     cred = random.choice(credentials)
+    logging.debug(f"Using credentials: {cred}")
     login(driver, cred["email"], cred["password"])
 
     try:
         profile_data = scrape_profile(driver, profile_url)
         response = jsonify(profile_data)
     except Exception as e:
+        logging.error(f"Error scraping profile: {e}")
         response = jsonify({"error": str(e)})
     finally:
         driver.quit()
