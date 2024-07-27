@@ -197,16 +197,13 @@ def scrape():
         logging.error("Profile URL is required")
         return jsonify({"error": "Profile URL is required"}), 400
 
-    # Use the correct path for ChromeDriver in the container
-    driver_path = '/usr/local/bin/chromedriver'
+    driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
     service = Service(driver_path)
 
     # Suppress Selenium logging
     options = webdriver.ChromeOptions()
     options.add_argument("--log-level=3")  # INFO = 0, WARNING = 1, LOG_ERROR = 2, LOG_FATAL = 3
     options.add_argument("--headless")  # Run in headless mode
-    options.add_argument("--no-sandbox")  # Added for running in Docker
-    options.add_argument("--disable-dev-shm-usage")  # Added for running in Docker
     driver = webdriver.Chrome(service=service, options=options)
 
     # Randomly select a credential set

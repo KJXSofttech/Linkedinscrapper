@@ -199,8 +199,6 @@ if __name__ == "__main__":
     email = input("Enter your LinkedIn email: ")
     password = input("Enter your LinkedIn password: ")
     profile_links = [
-        "https://www.linkedin.com/in/manjodh-singh-a5082b216/",
         "https://www.linkedin.com/in/sian-vance-05bb8817a/",
-        "https://www.linkedin.com/in/gokuls12/",
     ]
     main(email, password, profile_links)
