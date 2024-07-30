@@ -1,0 +1,33 @@
+{
+    "Full name": "(12) Shikha Ahuja",
+    "Headline": "Technical Recruiter at Markovate",
+    "Location": "Delhi, India",
+    "Profile Picture URL": "https://media.licdn.com/dms/image/D4D03AQF61mTD6rwycg/profile-displayphoto-shrink_200_200/0/1695311217731?e=1727913600&v=beta&t=DNCAgYNNFymrBwhEfrsG5GYVhzjCYyDdC5JXAjr_-IA",
+    "Background Image URL": "Background image not found",
+    "About Section": "HR Executive cum Recruiter with a knack for navigating the ever-changing tech talent landscape. With over two years of progressive experience, I am adept at  managing the full recruitment cycle where my approach involves not only matching skills but also ensuring a seamless cultural fit. I have a strong background in human resources management, with skills in talent acquisition, employee engagement, performance management, and compliance.I have an experience working with a diverse and talented team of developers, consultants, and managers, supporting them in their career growth and development. I also partner with various stakeholders and clients, ensuring that their expectations and requirements are met. I am passionate about creating a positive and inclusive work environment, where everyone can thrive and contribute to the company's vision and goals. I enjoy learning new things and staying updated with the latest trends and best practices in the IT industry.HR Executive cum Recruiter with a knack for navigating the ever-changing tech talent landscape. With over two years of progressive experience, I am adept at  managing the full recruitment cycle where my approach involves not only matching skills but also ensuring a seamless cultural fit. I have a strong background in human resources management, with skills in talent acquisition, employee engagement, performance management, and compliance. \n\nI have an experience working with a diverse and talented team of developers, consultants, and managers, supporting them in their career growth and development. I also partner with various stakeholders and clients, ensuring that their expectations and requirements are met. I am passionate about creating a positive and inclusive work environment, where everyone can thrive and contribute to the company's vision and goals. I enjoy learning new things and staying updated with the latest trends and best practices in the IT industry.\u2026see more",
+    "Experience": [
+        {
+            "position": "Technical Recruiter",
+            "company": "Markovate \u00b7 Full-time",
+            "duration": "Oct 2023 - Present \u00b7 10 mos",
+            "location": "Markovate is a digital experience agency that creates exceptional digital experiences for companies to empower their business and enhance their brand affinity. With over a decade of experience, the company has delivered 300+ digital products to some of the world's biggest brands. With 50+ engineers, we excel in AI, ML, Blockchain, Cloud, and Web development. Our clients include Dell, Walmart, Nestle, NVMS, Kraftfoods, Aisle 24 among others."
+        },
+        {
+            "position": "Human Resources Executive",
+            "company": "Xicom Technologies Ltd \u00b7 Full-time",
+            "duration": "Jun 2022 - Oct 2023 \u00b7 1 yr 5 mos",
+            "location": "Xicom is an established software development company with an enviable &amp; proven track-record engaged in providing application development services, technology consulting and IT outsourcing solutions to clients worldwide.<br>Xicom is an ISO certified, Microsoft certified and also accredited from NASSCOM and STPI. Maintained a top slot on ELANCE for around 10 years as a No.1 Service Provider.<br><br>Xicom provides a broad range of following Development Services :-<br><br>-Web Development<br>-Mobile App Development<br>-Software Development<br>-IT Consulting<br><br>Responsibilities :-<br>Being a HR Executive, I Manage the full  Recruitment cycle as well as Generalist duties. Starting from the initial assessments, interviews, offers to final on-boarding and induction of the employees."
+        },
+        {
+            "position": "Human Resources Recruiter",
+            "company": "AVATHARA \u00b7 Full-time",
+            "duration": "Feb 2019 - Jul 2019 \u00b7 6 mos",
+            "location": "New Delhi, Delhi, India \u00b7 Hybrid"
+        }
+    ],
+    "Education": [],
+    "Skills": [
+        "Pre-screening",
+        "Niche Talent Acquisition"
+    ]
+}
