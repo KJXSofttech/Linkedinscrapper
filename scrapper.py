@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import re
 import time
 import json
+import pandas as pd
 
 def login(driver, email, password):
     driver.get("https://www.linkedin.com/login")
@@ -171,7 +172,8 @@ def scrape_profile(driver, profile_url):
     skills = extract_skills(html_content)
 
     profile_data = {
-        "Full name": full_name,
+        "User ID": user_id,
+        "Full Name": full_name,
         "Headline": headline,
         "Location": location,
         "Profile Picture URL": profile_picture_url,
@@ -182,7 +184,23 @@ def scrape_profile(driver, profile_url):
         "Skills": skills
     }
 
-    print(json.dumps(profile_data, indent=4))
+    return profile_data
+
+def save_to_csv(profile_data, filename='linkedin_profiles.csv'):
+    # Convert experience, education, and skills lists to JSON strings
+    profile_data['Experience'] = json.dumps(profile_data['Experience'])
+    profile_data['Education'] = json.dumps(profile_data['Education'])
+    profile_data['Skills'] = json.dumps(profile_data['Skills'])
+    
+    # Create a DataFrame and save to CSV
+    df = pd.DataFrame([profile_data])
+    try:
+        existing_df = pd.read_csv(filename)
+        df = pd.concat([existing_df, df], ignore_index=True)
+    except FileNotFoundError:
+        pass
+    
+    df.to_csv(filename, index=False)
 
 def main(email, password, profile_links):
     driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
@@ -191,7 +209,8 @@ def main(email, password, profile_links):
     login(driver, email, password)
     
     for link in profile_links:
-        scrape_profile(driver, link)
+        profile_data = scrape_profile(driver, link)
+        save_to_csv(profile_data)
     
     driver.quit()
 
@@ -199,6 +218,6 @@ if __name__ == "__main__":
     email = input("Enter your LinkedIn email: ")
     password = input("Enter your LinkedIn password: ")
     profile_links = [
-        "https://www.linkedin.com/in/sian-vance-05bb8817a/",
+        "https://www.linkedin.com/in/ramanuj-acharya-7340445b/", "https://www.linkedin.com/in/paularindam/", "https://www.linkedin.com/in/saugata-gupta-36aa3b14/", "https://www.linkedin.com/in/veenakhanapur03/", "https://www.linkedin.com/in/rubal-dongare-439b32242/", "https://www.linkedin.com/in/atluri-naga-baswanth-624b9a8a/"
     ]
     main(email, password, profile_links)
