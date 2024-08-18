@@ -8,8 +8,19 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import re
 import time
+from pymongo import MongoClient
+import urllib.parse
 
 app = Flask(__name__)
+
+# MongoDB connection setup
+username = urllib.parse.quote_plus("kjxsofttechpvtltd")
+password = urllib.parse.quote_plus("KJXSOFTTECH123")
+connection_string = f"mongodb+srv://{username}:{password}@kjxwebsite.3mup0.mongodb.net/?retryWrites=true&w=majority&appName=kjxwebsite"
+
+client = MongoClient(connection_string, tls=True)
+db = client['LinkedinScrapper']
+collection = db['Mentors data']
 
 def login(driver, email, password):
     driver.get("https://www.linkedin.com/login")
@@ -121,7 +132,7 @@ def scrape_profile(driver, profile_url):
 
     skills = extract_skills(html_content)
 
-    return {
+    profile_data = {
         "User ID": user_id,
         "Full Name": full_name,
         "Headline": headline,
@@ -133,6 +144,14 @@ def scrape_profile(driver, profile_url):
         "Education": educations,
         "Skills": skills
     }
+
+    print(profile_data)  # Print profile data to the terminal
+
+    # Insert the profile data into MongoDB and capture the inserted_id
+    insert_result = collection.insert_one(profile_data)
+    profile_data['_id'] = str(insert_result.inserted_id)  # Convert ObjectId to string
+
+    return profile_data
 
 @app.route('/scrape_profiles', methods=['POST'])
 def scrape_profiles():
