@@ -1,25 +1,15 @@
-from flask import Flask, request, jsonify
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import re
 import time
-import random
-import os
-import logging
 import json
-
-app = Flask(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-credentials = [
-    {"email": "iakashreddy2k@gmail.com", "password": "Rz@Fas0923"},
-    {"email": "irohitroy89@gmail.com", "password": "Rz@Fas0923"}
-]
+import pandas as pd
 
 def login(driver, email, password):
-    logging.debug(f"Logging in with email: {email}")
     driver.get("https://www.linkedin.com/login")
     email_elem = driver.find_element(By.ID, "username")
     email_elem.send_keys(email)
@@ -34,12 +24,19 @@ def extract_user_id(profile_url):
 def clean_text(text):
     return re.sub(r'<!---->', '', text)
 
-def extract_profile_picture(html_content):
+def extract_third_profile_image(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
-    profile_pictures = []
-    for img_tag in soup.find_all('img', class_='pv-top-card-profile-picture__image--show'):
-        profile_pictures.append(img_tag['src'])
-    return profile_pictures[0] if profile_pictures else "Profile picture not found"
+    img_tags = soup.find_all('img')
+
+    profile_images = []
+    for img_tag in img_tags:
+        if 'src' in img_tag.attrs and 'profile-displayphoto-shrink' in img_tag['src']:
+            profile_images.append(img_tag['src'])
+
+    if len(profile_images) >= 3:
+        return profile_images[2]
+    else:
+        return None
 
 def extract_background_image(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -56,13 +53,21 @@ def extract_skills(html_content):
         skills.append(clean_text(skill_text))
     return skills
 
+def save_html_to_txt(html_content, user_id):
+    filename = f'{user_id}_profile.html.txt'
+    with open(filename, 'w', encoding='utf-8') as file:
+        file.write(html_content)
+
 def scrape_profile(driver, profile_url):
-    logging.debug(f"Scraping profile: {profile_url}")
+    print(f"Scraping profile: {profile_url}")
     driver.get(profile_url)
     time.sleep(5)
     
     html_content = driver.page_source
     user_id = extract_user_id(profile_url)
+
+    # Save HTML content to txt file
+    save_html_to_txt(html_content, user_id)
 
     # Extract full name using regex
     full_name_match = re.search(r'(?<=<title>).+? \| LinkedIn', html_content)
@@ -80,7 +85,8 @@ def scrape_profile(driver, profile_url):
     location = clean_text(location)
 
     # Extract profile picture URL
-    profile_picture_url = extract_profile_picture(html_content)
+    profile_picture_url = extract_third_profile_image(html_content)
+    profile_picture_url = profile_picture_url if profile_picture_url else "Profile picture not found"
 
     # Extract background image URL
     background_image_url = extract_background_image(html_content)
@@ -174,7 +180,8 @@ def scrape_profile(driver, profile_url):
     skills = extract_skills(html_content)
 
     profile_data = {
-        "Full name": full_name,
+        "User ID": user_id,
+        "Full Name": full_name,
         "Headline": headline,
         "Location": location,
         "Profile Picture URL": profile_picture_url,
@@ -185,48 +192,41 @@ def scrape_profile(driver, profile_url):
         "Skills": skills
     }
 
-    # Save data to a text file
-    filename = f"{full_name}.txt"
-    with open(filename, 'w', encoding='utf-8') as file:
-        file.write(json.dumps(profile_data, indent=4))
-
     return profile_data
 
-@app.route('/scrape', methods=['POST'])
-def scrape():
-    data = request.json
-    logging.debug(f"Received data: {data}")
-    profile_url = data.get('profile_url')
-    logging.debug(f"Profile URL: {profile_url}")
+def save_to_csv(profile_data, filename='linkedin_profiles.csv'):
+    # Convert experience, education, and skills lists to JSON strings
+    profile_data['Experience'] = json.dumps(profile_data['Experience'])
+    profile_data['Education'] = json.dumps(profile_data['Education'])
+    profile_data['Skills'] = json.dumps(profile_data['Skills'])
+    
+    # Create a DataFrame and save to CSV
+    df = pd.DataFrame([profile_data])
+    try:
+        existing_df = pd.read_csv(filename)
+        df = pd.concat([existing_df, df], ignore_index=True)
+    except FileNotFoundError:
+        pass
+    
+    df.to_csv(filename, index=False)
 
-    if not profile_url:
-        logging.error("Profile URL is required")
-        return jsonify({"error": "Profile URL is required"}), 400
-
+def main(email, password, profile_links):
     driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
     service = Service(driver_path)
-
-    # Suppress Selenium logging
-    options = webdriver.ChromeOptions()
-    options.add_argument("--log-level=3")  # INFO = 0, WARNING = 1, LOG_ERROR = 2, LOG_FATAL = 3
-    options.add_argument("--headless")  # Run in headless mode
-    driver = webdriver.Chrome(service=service, options=options)
-
-    # Randomly select a credential set
-    cred = random.choice(credentials)
-    logging.debug(f"Using credentials: {cred}")
-    login(driver, cred["email"], cred["password"])
-
-    try:
-        profile_data = scrape_profile(driver, profile_url)
-        response = jsonify(profile_data)
-    except Exception as e:
-        logging.error(f"Error scraping profile: {e}")
-        response = jsonify({"error": str(e)})
-    finally:
-        driver.quit()
-
-    return response
+    driver = webdriver.Chrome(service=service)
+    login(driver, email, password)
+    
+    for link in profile_links:
+        profile_data = scrape_profile(driver, link)
+        save_to_csv(profile_data)
+    
+    driver.quit()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    email = input("Enter your LinkedIn email: ")
+    password = input("Enter your LinkedIn password: ")
+    profile_links = [
+        "https://www.linkedin.com/in/brijeshyadavgkp/", 
+        "https://www.linkedin.com/in/sakshi-gawande-0095351ab/"
+    ]
+    main(email, password, profile_links)
