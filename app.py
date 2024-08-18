@@ -27,14 +27,15 @@ def clean_text(text):
     return re.sub(r'<!---->', '', text)
 
 def clean_full_name(full_name):
-    # Remove leading characters and numbers like "(6) " from full name
     return re.sub(r'^\(\d+\)\s*', '', full_name).strip()
 
-def extract_third_profile_image(html_content):
+def extract_profile_picture(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
-    img_tags = soup.find_all('img')
-    profile_images = [img['src'] for img in img_tags if 'src' in img.attrs and 'profile-displayphoto-shrink' in img['src']]
-    return profile_images[2] if len(profile_images) >= 3 else None
+    profile_picture = soup.find('img', {'class': 'presence-entity__image'})
+    if profile_picture:
+        return profile_picture['src']
+    else:
+        return "Profile picture not found"
 
 def extract_background_image(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -55,7 +56,7 @@ def scrape_profile(driver, profile_url):
 
     full_name_match = re.search(r'(?<=<title>).+? \| LinkedIn', html_content)
     full_name = clean_text(full_name_match.group().replace(" | LinkedIn", "")) if full_name_match else "Full name not found"
-    full_name = clean_full_name(full_name)  # Clean the full name
+    full_name = clean_full_name(full_name)
 
     headline_match = re.search(r'<div class="text-body-medium break-words"[^>]*>([^<]+)</div>', html_content)
     headline = clean_text(headline_match.group(1).strip()) if headline_match else "Headline not found"
@@ -63,7 +64,7 @@ def scrape_profile(driver, profile_url):
     location_match = re.search(r'<span class="text-body-small inline t-black--light break-words"[^>]*>([^<]+)</span>', html_content)
     location = clean_text(location_match.group(1).strip()) if location_match else "Location not found"
 
-    profile_picture_url = extract_third_profile_image(html_content) or "Profile picture not found"
+    profile_picture_url = extract_profile_picture(html_content)
     background_image_url = extract_background_image(html_content)
 
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -150,7 +151,7 @@ def scrape_profiles():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--log-level=3")  # This will suppress most console logs
+    chrome_options.add_argument("--log-level=3")
     
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
