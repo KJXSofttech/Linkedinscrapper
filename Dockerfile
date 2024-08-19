@@ -1,35 +1,45 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.9-slim
+# Use an official Python runtime as a parent image
+FROM python:3.12-slim-bullseye
 
-# Install required packages for Selenium and ChromeDriver
-RUN apt-get update && \
-    apt-get install -y wget gnupg unzip curl
-
-# Add the Chrome repository to the sources list
-RUN curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list && \
-    apt-get update && \
-    apt-get install -y google-chrome-stable
-
-# Install ChromeDriver
-RUN wget -O /tmp/chromedriver.zip https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip && \
-    unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/ && \
-    rm /tmp/chromedriver.zip
-
-# Copy the current directory contents into the container at /app
-COPY . /app
-
-# Set the working directory to /app
+# Set the working directory in the container
 WORKDIR /app
 
-# Install any needed packages specified in requirements.txt
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    gnupg \
+    curl \
+    libnss3 \
+    libxss1 \
+    libappindicator1 \
+    fonts-liberation \
+    xdg-utils \
+    libu2f-udev \
+    libgbm-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable
+
+# Install ChromeDriver
+RUN CHROMEDRIVER_VERSION="114.0.5735.90" \
+    && wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip \
+    && unzip chromedriver_linux64.zip -d /usr/local/bin/ \
+    && rm chromedriver_linux64.zip
+
+# Copy the requirements.txt file and install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 4000 available to the world outside this container
-EXPOSE 4000
+# Copy the rest of the application code
+COPY . .
 
-# Define environment variable
-ENV FLASK_APP=app.py
+# Expose the port on which the Flask app will run
+EXPOSE 5000
 
-# Run app.py when the container launches
-CMD ["flask", "run", "--host=0.0.0.0", "--port=4000"]
+# Run the Flask app
+CMD ["python", "app.py"]
