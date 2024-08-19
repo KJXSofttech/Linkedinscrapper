@@ -4,7 +4,7 @@ FROM python:3.12-slim-bullseye
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
@@ -31,15 +31,17 @@ RUN CHROMEDRIVER_VERSION="114.0.5735.90" \
     && unzip chromedriver_linux64.zip -d /usr/local/bin/ \
     && rm chromedriver_linux64.zip
 
-# Copy the requirements.txt file and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application code
+# Copy the current directory contents into the container at /app
 COPY . .
 
-# Expose the port on which the Flask app will run
+# Install any Python dependencies specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Make port 5000 available to the world outside this container
 EXPOSE 5000
 
-# Run the Flask app
+# Define environment variable for Chrome to run headless
+ENV DISPLAY=:99
+
+# Run app.py when the container launches
 CMD ["python", "app.py"]
