@@ -1,14 +1,16 @@
 from flask import Flask, request, jsonify
-from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
 from bs4 import BeautifulSoup
+from pymongo import MongoClient
+import os
 import re
 import time
-from pymongo import MongoClient
+
 import urllib.parse
 
 app = Flask(__name__)
@@ -161,17 +163,21 @@ def scrape_profiles():
     profile_links = data.get('profile_links')
 
     if not email or not password or not profile_links:
-        return jsonify({"error": "Please provide email, password, and profile_links"}), 400
+        return jsonify({"error": "Please provide email, password, and profile_links"}), 400 
 
-    driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
-    service = Service(driver_path)
+
     
     chrome_options = Options()
+    chrome_options.binary_location ="/opt/chrome/chrome-linux64/chrome"
+
     chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--log-level=3")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")  # This is important for some versions of Chrome
+    chrome_options.add_argument("--remote-debugging-port=9222")  # This is recommended
+
     
+    service = Service(executable_path="/opt/chromedriver/chromedriver-linux64/chromedriver")
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     try:
