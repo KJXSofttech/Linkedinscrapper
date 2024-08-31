@@ -14,7 +14,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -29,6 +30,11 @@ services:
       - mongo_data:/data/db
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.runCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   mongo_data:
