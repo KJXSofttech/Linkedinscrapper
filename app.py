@@ -164,50 +164,55 @@ def scrape_profile(driver, profile_url):
 
 @app.route('/scrape_profiles', methods=['POST'])
 def scrape_profiles():
-    data = request.json
-    email = data.get('email')
-    password = data.get('password')
-    profile_links = data.get('profile_links')
-
-    if not email or not password or not profile_links:
-        return jsonify({"error": "Please provide email, password, and profile_links"}), 400 
-
-    chrome_options = Options()
-    chrome_options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"  # Adjust if necessary
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--ignore-certificate-errors")
-    chrome_options.add_argument("--disable-infobars")
-    chrome_options.add_argument("--mute-audio")
-    chrome_options.add_argument("--disable-popup-blocking")
-    chrome_options.add_argument("--incognito")
-
-    logger.info("Initializing WebDriver with specified ChromeDriver path.")
-
     try:
-        # Use the manually downloaded ChromeDriver
-        service = Service("C:\\KJX\\Linkedinscrapper\\chromedriver-win32\\chromedriver-win32\\chromedriver.exe")  # Replace with your path
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+        profile_links = data.get('profile_links')
+
+        if not email or not password or not profile_links:
+            logger.error("Missing required parameters.")
+            return jsonify({"error": "Please provide email, password, and profile_links"}), 400 
+
+        # Set Chrome options
+        chrome_options = Options()
+        chrome_options.binary_location = "/usr/bin/google-chrome"  # Adjust if necessary
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--disable-infobars")
+        chrome_options.add_argument("--mute-audio")
+        chrome_options.add_argument("--disable-popup-blocking")
+        chrome_options.add_argument("--incognito")
+
+        logger.info("Initializing WebDriver with specified ChromeDriver path.")
+
+        service = Service("/usr/local/bin/chromedriver")  # Path to ChromeDriver on Linux server
         driver = webdriver.Chrome(service=service, options=chrome_options)
         logger.info("WebDriver initialized successfully.")
         
         login(driver, email, password)
-        
+
         all_profile_data = []
         for link in profile_links:
-            profile_data = scrape_profile(driver, link)
-            all_profile_data.append(profile_data)
-        
+            try:
+                profile_data = scrape_profile(driver, link)
+                all_profile_data.append(profile_data)
+            except Exception as scrape_error:
+                logger.error(f"Error scraping profile {link}: {str(scrape_error)}")
+                continue
+
         logger.info("Scraping completed successfully.")
         return jsonify(all_profile_data)
-    
+
     except Exception as e:
         logger.error(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
-    
+
     finally:
         if 'driver' in locals():
             driver.quit()
