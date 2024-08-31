@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     gnupg \
     curl \
+    jq \
     libnss3 \
     libxss1 \
     libappindicator1 \
@@ -17,19 +18,29 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     libu2f-udev \
     libgbm-dev \
+    libasound2 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxtst6 \
+    lsb-release \
+    xdg-utils \
+    libgbm1 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable
+# Copy ChromeDriver from local system to Docker container
+COPY chromedriver-win32/chromedriver-win32/chromedriver.exe /usr/local/bin/chromedriver
 
-# Install ChromeDriver
-RUN CHROMEDRIVER_VERSION="114.0.5735.90" \
-    && wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip \
-    && unzip chromedriver_linux64.zip -d /usr/local/bin/ \
-    && rm chromedriver_linux64.zip
+# Copy Chrome binary if required, or specify its path if already installed on host
+
+# Set environment variables for Chrome and ChromeDriver
+ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
+ENV PATH="/usr/local/bin:$PATH"
+
+# Install Selenium and other dependencies
+RUN pip install selenium
 
 # Copy the current directory contents into the container at /app
 COPY . .
@@ -37,7 +48,7 @@ COPY . .
 # Install any Python dependencies specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 5000 available to the world outside this container
+# Expose port 5000 for Flask
 EXPOSE 5000
 
 # Define environment variable for Chrome to run headless

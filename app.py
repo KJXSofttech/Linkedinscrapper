@@ -1,28 +1,35 @@
 from flask import Flask, request, jsonify
-from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium import webdriver
 from bs4 import BeautifulSoup
+from pymongo import MongoClient
+import os
 import re
 import time
-from pymongo import MongoClient
 import urllib.parse
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 # MongoDB connection setup
 username = urllib.parse.quote_plus("kjxsofttechpvtltd")
-password = urllib.parse.quote_plus("KJXSOFTTECH123")
-connection_string = f"mongodb+srv://{username}:{password}@kjxwebsite.3mup0.mongodb.net/?retryWrites=true&w=majority&appName=kjxwebsite"
+password = urllib.parse.quote_plus("Rz@Fas092311")
+connection_string = f"mongodb+srv://kjxsofttechpvtltd:{password}@kjxwebsite.3mup0.mongodb.net/"
 
 client = MongoClient(connection_string, tls=True)
 db = client['LinkedinScrapper']
 collection = db['Mentors data']
 
 def login(driver, email, password):
+    logger.info("Navigating to LinkedIn login page.")
     driver.get("https://www.linkedin.com/login")
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "username")))
     email_elem = driver.find_element(By.ID, "username")
@@ -30,6 +37,7 @@ def login(driver, email, password):
     password_elem = driver.find_element(By.ID, "password")
     password_elem.send_keys(password)
     password_elem.submit()
+    logger.info("Successfully logged in to LinkedIn.")
 
 def extract_user_id(profile_url):
     return profile_url.split('/')[-2]
@@ -59,6 +67,7 @@ def extract_skills(html_content):
     return [clean_text(skill.find('span', {'aria-hidden': 'true'}).text.strip()) for skill in skill_elements]
 
 def scrape_profile(driver, profile_url):
+    logger.info(f"Scraping profile: {profile_url}")
     driver.get(profile_url)
     time.sleep(2)
     
@@ -145,7 +154,7 @@ def scrape_profile(driver, profile_url):
         "Skills": skills
     }
 
-    print(profile_data)  # Print profile data to the terminal
+    logger.info(f"Profile data scraped: {profile_data}")
 
     # Insert the profile data into MongoDB and capture the inserted_id
     insert_result = collection.insert_one(profile_data)
@@ -161,20 +170,30 @@ def scrape_profiles():
     profile_links = data.get('profile_links')
 
     if not email or not password or not profile_links:
-        return jsonify({"error": "Please provide email, password, and profile_links"}), 400
+        return jsonify({"error": "Please provide email, password, and profile_links"}), 400 
 
-    driver_path = r'C:\\KJX\\Linkedinscrapper\\chromedriver.exe'
-    service = Service(driver_path)
-    
     chrome_options = Options()
+    chrome_options.binary_location = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"  # Adjust if necessary
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--log-level=3")
-    
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--ignore-certificate-errors")
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--mute-audio")
+    chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--incognito")
+
+    logger.info("Initializing WebDriver with specified ChromeDriver path.")
+
     try:
+        # Use the manually downloaded ChromeDriver
+        service = Service("C:\\KJX\\Linkedinscrapper\\chromedriver-win32\\chromedriver-win32\\chromedriver.exe")  # Replace with your path
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        logger.info("WebDriver initialized successfully.")
+        
         login(driver, email, password)
         
         all_profile_data = []
@@ -182,13 +201,17 @@ def scrape_profiles():
             profile_data = scrape_profile(driver, link)
             all_profile_data.append(profile_data)
         
+        logger.info("Scraping completed successfully.")
         return jsonify(all_profile_data)
     
     except Exception as e:
+        logger.error(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
     finally:
-        driver.quit()
+        if 'driver' in locals():
+            driver.quit()
+            logger.info("WebDriver session ended.")
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
