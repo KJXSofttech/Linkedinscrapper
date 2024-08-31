@@ -30,17 +30,17 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy ChromeDriver from local system to Docker container
-COPY chromedriver-win32/chromedriver-win32/chromedriver.exe /usr/local/bin/chromedriver
+# Install Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable
 
-# Copy Chrome binary if required, or specify its path if already installed on host
-
-# Set environment variables for Chrome and ChromeDriver
-ENV CHROMEDRIVER_PATH=/usr/local/bin/chromedriver
-ENV PATH="/usr/local/bin:$PATH"
-
-# Install Selenium and other dependencies
-RUN pip install selenium
+# Install ChromeDriver
+RUN CHROMEDRIVER_VERSION="114.0.5735.90" \
+    && wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip \
+    && unzip chromedriver_linux64.zip -d /usr/local/bin/ \
+    && rm chromedriver_linux64.zip
 
 # Copy the current directory contents into the container at /app
 COPY . .
