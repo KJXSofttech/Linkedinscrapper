@@ -23,20 +23,20 @@ RUN apt-get update && apt-get install -y \
     libx11-xcb1 \
     libxtst6 \
     lsb-release \
-    xdg-utils \
     libgbm1 \
     libatk-bridge2.0-0 \
     libgtk-3-0 \
-    && rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Google Chrome
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
+    sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list' && \
     apt-get update && \
     apt-get install -y google-chrome-stable
 
 # Download ChromeDriver from the provided link
-RUN wget -O /tmp/chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/128.0.6613.86/linux64/chromedriver-linux64.zip
+RUN wget -O /tmp/chromedriver-linux64.zip https://storage.googleapis.com/chrome-for-testing-public/129.0.6668.70/linux64/chromedriver-linux64.zip
 
 # Unzip and move to the correct location
 RUN unzip /tmp/chromedriver-linux64.zip -d /usr/local/bin/ && rm /tmp/chromedriver-linux64.zip
@@ -48,13 +48,11 @@ RUN chmod +x /usr/local/bin/chromedriver-linux64/chromedriver
 RUN ln -s /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
 
 # Install Python dependencies
-RUN pip install selenium
-
-# Copy the current directory contents into the container at /app
-COPY . .
-
-# Install any Python dependencies specified in requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the application code
+COPY . .
 
 # Expose port 5000 for Flask
 EXPOSE 5000
