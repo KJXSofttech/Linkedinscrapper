@@ -48,10 +48,11 @@ def login(driver, email, password):
     password_elem.send_keys(password)
     password_elem.submit()
 
-    # Verifying if login is successful
     try:
+        # Wait for successful login
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "global-nav-search")))
         logger.info(f"Successfully logged into LinkedIn. Current URL: {driver.current_url}")
+
     except Exception as e:
         logger.error(f"Login failed. Error: {str(e)}")
         take_screenshot(driver, "screenshots", "login_error")  # Take screenshot on error
@@ -104,6 +105,8 @@ def scrape_profile(driver, profile_url):
         background_image_url = extract_background_image(html_content)
 
         soup = BeautifulSoup(html_content, 'html.parser')
+
+        # Extract About Section
         about_header = soup.find('div', {'id': 'about'})
         about_text = "About section not found"
         if about_header:
@@ -111,6 +114,7 @@ def scrape_profile(driver, profile_url):
             if about_section:
                 about_text = "\n".join(clean_text(child.get_text(strip=True)) for child in about_section.children if child.name is not None)
 
+        # Extract Experience Section
         experience_pattern = re.compile(r'<div id="experience".*?</section>', re.DOTALL)
         experience_section = experience_pattern.search(html_content)
         experiences = []
@@ -134,6 +138,7 @@ def scrape_profile(driver, profile_url):
                     experience['location'] = clean_text(location_matches[-1].strip())
                 experiences.append(experience)
 
+        # Extract Education Section
         education_pattern = re.compile(r'<div id="education".*?</section>', re.DOTALL)
         education_section = education_pattern.search(html_content)
         educations = []
@@ -155,6 +160,7 @@ def scrape_profile(driver, profile_url):
                     education['years'] = clean_text(years_match.group(1)).strip()
                 educations.append(education)
 
+        # Extract Skills
         skills = extract_skills(html_content)
 
         profile_data = {
@@ -199,7 +205,6 @@ def scrape_profiles():
         chrome_options.binary_location = "/usr/bin/google-chrome"  # Adjust if necessary
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--disable-extensions")
